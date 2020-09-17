@@ -1,4 +1,5 @@
 import "./styles.css";
+// rxjs
 import {
   take,
   takeUntil,
@@ -12,12 +13,13 @@ import {
   switchMap,
   mapTo,
 } from "rxjs/operators";
-// rxjs
 import { fromEvent, timer, merge, of } from "rxjs";
 
+// dom elements
 const boxes = Array.from(document.getElementsByClassName("box"));
 let root = document.documentElement;
 
+// move infos
 interface MoveInfo {
   axis: string;
   direction: number;
@@ -50,28 +52,25 @@ const arrowKeys$ = fromEvent<KeyboardEvent>(document, "keydown")
     map((event) => event.key),
     distinctUntilChanged((a, b) => a === b),
     map((code: string) => moveInfos[code]),
+    tap((v) => moveSnake),
     tap((v) => console.log("arrow-direction:", v))
   )
   .subscribe();
 
-// const lastKey$ = timer$
-//   .pipe(withLatestFrom(arrowKeys$))
-//   .subscribe((k) => console.log("direction:", k));
-// tap((event: KeyboardEvent) => console.log("event:", event.key)),
-// filter((event: KeyboardEvent) => event.key === "ArrowLeft")
-const startX = 200;
-const startY = 200;
+const startx = 200;
+const starty = 200;
 
-const moveSnake = () => {
-  let n = 1;
-  root.style.setProperty("--snake-move-x", 0 + "px");
-  root.style.setProperty("--snake-move-y", 200 + n * 20 * -1 * 20 + "px");
-  n++;
+const moveSnake = (moveInfo: MoveInfo) => {
+  let moveStep = 20;
+  let i = 1;
+  let propValue = `--snake-move-${moveInfo.axis}`;
+  root.style.setProperty(propValue, startx + i * moveStep + "px");
+  i++;
 };
 
-const moves$ = timer$.pipe(
-  take(5),
-  tap(() => moveSnake()),
-  tap((v) => console.log("timer$:", v))
-);
+// const moves$ = timer$.pipe(
+//   take(5),
+//   tap(() => moveSnake()),
+//   tap((v) => console.log("timer$:", v))
+// );
 //.subscribe();
