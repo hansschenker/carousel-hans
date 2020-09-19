@@ -73,7 +73,7 @@ interface SnakeState {
 const initialState: SnakeState = {
   position: { x: 200, y: 200 },
   distance: 20,
-  direction: { axis: "x", axisTo: -1 },
+  direction: { axis: "y", axisTo: 1 },
 };
 
 console.clear();
@@ -90,6 +90,7 @@ const arrowKeys$ = fromEvent<KeyboardEvent>(document, "keydown").pipe(
   ),
   map((event) => event.key),
   // distinctUntilChanged((a, b) => a === b),
+  tap((v) => console.log("arrow:", v)),
   map((arrow: string) => moveInfos[arrow])
 
   //tap((v: SnakeState) => moveSnake(v))
@@ -106,7 +107,7 @@ const timer$ = timer(0, 1000)
           x: state.position.x + state.distance,
           y: state.position.y + state.distance,
         },
-        distance: state.distance + state.distance,
+        //distance: state.distance + state.distance,
       }),
       initialState
     ),
@@ -121,8 +122,12 @@ const timer$ = timer(0, 1000)
 const moveSnake = (snakeState: SnakeState) => {
   let axis = snakeState.direction.axis;
   let moveAxis = `--snake-move-${axis}`;
-  let movePositionx = `${snakeState.position.x}px`;
-  let movePositiony = `${snakeState.position.y}px`;
+  let movePositionx = `${
+    snakeState.position.x * snakeState.direction.axisTo
+  }px`;
+  let movePositiony = `${
+    snakeState.position.y * snakeState.direction.axisTo
+  }px`;
   let moveValue = axis === "x" ? movePositionx : movePositiony;
   console.log("css-setProperty:", moveAxis, moveValue);
   root.style.setProperty(moveAxis, moveValue);

@@ -1,13 +1,14 @@
 :root {
   --head-bg-color: red;
   --body-bg-color: brown;
+
   --start-x: 200px;
   --start-y: 200px;
-  --snake-direction: -1;
+  /* --snake-direction: -1; */
   --snake-move-x: 200px;
   --snake-move-y: 200px;
-  --snake-step-x: 20px;
-  --snake-step-y: 5px;
+  /* --snake-step-x: 20px;
+  --snake-step-y: 5px; */
 }
 
 .bordered {
@@ -30,27 +31,15 @@
   background-color: red;
 }
 .snake:nth-child(1) {
-  transform: translate3d(
-    calc(var(--snake-move-x) + 0px),
-    calc(var(--snake-move-y) + 20px),
-    0px
-  );
+  transform: translate3d(var(--snake-move-x), var(--snake-move-y), 0px);
   top: var(--start-y);
 }
 .snake:nth-child(2) {
-  transform: translate3d(
-    calc(var(--snake-move-x) + 0px),
-    calc(var(--snake-move-y) + 40px),
-    0px
-  );
+  transform: translate3d(var(--snake-move-x), var(--snake-move-y), 0px);
   top: var(--start-y);
 }
 .snake:nth-child(3) {
-  transform: translate3d(
-    calc(var(--snake-move-x) + 0px),
-    calc(var(--snake-move-y) + 60px),
-    0px
-  );
+  transform: translate3d(var(--snake-move-x), var(--snake-move-y), 0px);
   top: var(--start-y);
 }
 
