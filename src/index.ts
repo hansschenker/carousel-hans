@@ -13,8 +13,18 @@ import {
   switchMap,
   mapTo,
   scan,
+  mergeMap,
 } from "rxjs/operators";
-import { fromEvent, timer, merge, of, combineLatest } from "rxjs";
+import {
+  fromEvent,
+  timer,
+  merge,
+  of,
+  combineLatest,
+  BehaviorSubject,
+  Observable,
+  Subject,
+} from "rxjs";
 
 // dom elements: snake parts
 const snakeParts = Array.from(document.getElementsByClassName("snake"));
@@ -24,61 +34,77 @@ interface Direction {
   axis: string;
   axisTo: number;
 }
+const initialDirection = {
+  axis: "x",
+  axisTo: -1,
+};
 interface Position {
   x: number;
   y: number;
 }
 
-type MoveArrow = "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown";
+// type MoveArrow = "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown";
 
-interface MoveArrowDirection {
-  arrowDirection: MoveArrow;
-}
+// interface MoveArrowDirection {
+//   arrowDirection: MoveArrow;
+// }
 // move info
 interface MoveInfo {
-  // position: Position;
   direction: Direction;
-  // distance: number;
 }
 
 var moveInfos: { [key: string]: MoveInfo } = {
   ArrowLeft: {
-    // position: { x: 200, y: 200 },
-    // distance: 20,
     direction: { axis: "x", axisTo: -1 },
   },
   ArrowRight: {
-    // position: { x: 200, y: 200 },
-    // distance: 20,
-    direction: { axis: "x", axisTo: -1 },
+    direction: { axis: "x", axisTo: 1 },
   },
   ArrowUp: {
-    // position: { x: 200, y: 200 },
-    // distance: 20,
     direction: { axis: "y", axisTo: -1 },
   },
   ArrowDown: {
-    // position: { x: 200, y: 200 },
-    // distance: 20,
     direction: { axis: "y", axisTo: 1 },
   },
 };
 
 // snake position state
-interface SnakeState {
+interface Snake {
   position: Position;
   distance: number;
   direction: Direction;
 }
-const initialState: SnakeState = {
+const initialState: Snake = {
   position: { x: 200, y: 200 },
   distance: 20,
-  direction: { axis: "y", axisTo: 1 },
+  direction: { axis: "y", axisTo: -1 },
 };
 
+let vm$: Observable<Snake>;
+const directionState = new Subject<Direction>();
+
+const directionChange$ = directionState.pipe(
+  map((direction: Direction) => (vm: Snake) => ({
+    ...vm,
+    direction: direction,
+    position:
+      direction.axis === "x"
+        ? { x: vm.position.x + 20 * (1 * direction.axisTo), y: vm.position.y }
+        : { y: vm.position.y + 20 * (1 * direction.axisTo), x: vm.position.x },
+  }))
+);
+
+vm$ = merge(directionChange$).pipe(
+  scan(
+    (oldVm: Snake, reduceVm: (vm: Snake) => Snake) => reduceVm(oldVm),
+    initialState
+  )
+);
+vm$.subscribe((v) => console.log("vm$-direction:", v.direction));
+vm$.subscribe((v) => console.log("vm$-position:", v.position));
+
 console.clear();
-console.log("boxes:", snakeParts);
-// translate3d(tx, ty, tz)
+// console.log("boxes:", snakeParts);
 
 const arrowKeys$ = fromEvent<KeyboardEvent>(document, "keydown").pipe(
   filter(
@@ -90,13 +116,21 @@ const arrowKeys$ = fromEvent<KeyboardEvent>(document, "keydown").pipe(
   ),
   map((event) => event.key),
   // distinctUntilChanged((a, b) => a === b),
-  tap((v) => console.log("arrow:", v)),
-  map((arrow: string) => moveInfos[arrow])
+  // tap((v) => console.log("arrow:", v)),
+  map((arrow: string) => moveInfos[arrow]),
+  tap((moveInfo) => directionState.next(moveInfo.direction))
 
-  //tap((v: SnakeState) => moveSnake(v))
+  //todo: change the the direction.axis and .axisTo
 );
 const timer$ = timer(0, 1000);
-const moves$ = combineLatest(timer$, arrowKeys$)
+const moves$ = combineLatest(
+  timer$,
+  arrowKeys$,
+  directionChange$.pipe(
+    map((vm) => vm)
+    // tap((v) => console.log("directionChange:", v))
+  )
+)
   .pipe(
     scan(
       (state) => ({
@@ -107,19 +141,18 @@ const moves$ = combineLatest(timer$, arrowKeys$)
           x: state.position.x + state.distance,
           y: state.position.y + state.distance,
         },
-        //distance: state.distance + state.distance,
       }),
       initialState
     ),
-    tap((v: SnakeState) => {
-      console.log("snakeState-position:", v.position);
-    }),
+    // tap((v: SnakeState) => {
+    //   console.log("snakeState-position:", v.position);
+    // }),
     tap((v) => moveSnake(v)),
-    take(5)
+    take(10)
   )
   .subscribe();
 
-const moveSnake = (snakeState: SnakeState) => {
+const moveSnake = (snakeState: Snake) => {
   let axis = snakeState.direction.axis;
   let moveAxis = `--snake-move-${axis}`;
   let movePositionx = `${
@@ -132,9 +165,9 @@ const moveSnake = (snakeState: SnakeState) => {
   console.log("css-setProperty:", moveAxis, moveValue);
   root.style.setProperty(moveAxis, moveValue);
 
-  console.log("state-direction-to:", snakeState.direction.axisTo);
-  console.log("state-direction-axis:", snakeState.direction.axis);
-  console.log("state-distance:", snakeState.distance);
-  console.log("state-position-x:", snakeState.position.x);
-  console.log("state-position-y:", snakeState.position.y);
+  // console.log("state-direction-to:", snakeState.direction.axisTo);
+  // console.log("state-direction-axis:", snakeState.direction.axis);
+  // console.log("state-distance:", snakeState.distance);
+  // console.log("state-position-x:", snakeState.position.x);
+  // console.log("state-position-y:", snakeState.position.y);
 };
