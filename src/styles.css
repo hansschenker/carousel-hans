@@ -11,23 +11,25 @@
 }
 
 .bordered {
-  border: 1px solid black;
+  border: 0.25vmin solid black;
 }
 /* .board {
   background-color: #7cb82e;
   margin: 0 auto;
 } */
-.box {
+.snake {
   display: inline-block;
   position: absolute;
   left: var(--start-x);
   top: var(--start-y);
   width: 20px;
   height: 20px;
-  background-color: aquamarine;
+  background-color: hsl(200, 100%, 50%);
 }
-.box:nth-child(1) {
+.snake.head {
   background-color: red;
+}
+.snake:nth-child(1) {
   transform: translate3d(
     calc(var(--snake-move-x) + 0px),
     calc(var(--snake-move-y) + 20px),
@@ -35,7 +37,7 @@
   );
   top: var(--start-y);
 }
-.box:nth-child(2) {
+.snake:nth-child(2) {
   transform: translate3d(
     calc(var(--snake-move-x) + 0px),
     calc(var(--snake-move-y) + 40px),
@@ -43,7 +45,7 @@
   );
   top: var(--start-y);
 }
-.box:nth-child(3) {
+.snake:nth-child(3) {
   transform: translate3d(
     calc(var(--snake-move-x) + 0px),
     calc(var(--snake-move-y) + 60px),
@@ -69,11 +71,6 @@ body {
   display: grid;
   grid-template-rows: repeat(21, 1fr);
   grid-template-columns: repeat(21, 1fr);
-}
-
-.snake {
-  background-color: hsl(200, 100%, 50%);
-  border: 0.25vmin solid black;
 }
 
 .food {

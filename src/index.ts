@@ -16,113 +16,122 @@ import {
 } from "rxjs/operators";
 import { fromEvent, timer, merge, of } from "rxjs";
 
-// dom elements
-const boxes = Array.from(document.getElementsByClassName("box"));
+// dom elements: snake parts
+const snakeParts = Array.from(document.getElementsByClassName("snake"));
 let root = document.documentElement;
 
 interface Direction {
   axis: string;
-  moveto: number;
+  axisTo: number;
 }
 interface Position {
   x: number;
   y: number;
 }
-// move directions
-interface MoveInfo {
-  position: Position;
-  direction: Direction;
-  distance: number;
-  speed?: number;
-  collision?: boolean;
-}
 
-type Move = "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown";
+type MoveArrow = "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown";
+
+interface MoveArrowDirection {
+  arrowDirection: MoveArrow;
+}
+// move info
+interface MoveInfo {
+  // position: Position;
+  direction: Direction;
+  // distance: number;
+}
 
 var moveInfos: { [key: string]: MoveInfo } = {
   ArrowLeft: {
-    position: { x: 200, y: 200 },
-    distance: 20,
-    direction: { axis: "x", moveto: -1 },
+    // position: { x: 200, y: 200 },
+    // distance: 20,
+    direction: { axis: "x", axisTo: -1 },
   },
   ArrowRight: {
-    position: { x: 200, y: 200 },
-    distance: 20,
-    direction: { axis: "x", moveto: -1 },
+    // position: { x: 200, y: 200 },
+    // distance: 20,
+    direction: { axis: "x", axisTo: -1 },
   },
   ArrowUp: {
-    position: { x: 200, y: 200 },
-    distance: 20,
-    direction: { axis: "y", moveto: -1 },
+    // position: { x: 200, y: 200 },
+    // distance: 20,
+    direction: { axis: "y", axisTo: -1 },
   },
   ArrowDown: {
-    position: { x: 200, y: 200 },
-    distance: 20,
-    direction: { axis: "y", moveto: 1 },
+    // position: { x: 200, y: 200 },
+    // distance: 20,
+    direction: { axis: "y", axisTo: 1 },
   },
 };
 
 // snake position state
 interface SnakeState {
-  move: MoveInfo;
+  position: Position;
+  distance: number;
+  direction: Direction;
 }
 const initialState: SnakeState = {
-  move: {
-    position: { x: 200, y: 200 },
-    distance: 20,
-    direction: { axis: "x", moveto: -1 },
-    collision: false,
-    speed: 500,
-  },
+  position: { x: 200, y: 200 },
+  distance: 20,
+  direction: { axis: "x", axisTo: -1 },
 };
 
 console.clear();
-console.log("boxes:", boxes);
+console.log("boxes:", snakeParts);
 // translate3d(tx, ty, tz)
 
-const timer$ = timer(0, 1000);
+const arrowKeys$ = fromEvent<KeyboardEvent>(document, "keydown").pipe(
+  filter(
+    (event: KeyboardEvent) =>
+      event.key === "ArrowLeft" ||
+      event.key === "ArrowRight" ||
+      event.key === "ArrowUp" ||
+      event.key === "ArrowDown"
+  ),
+  map((event) => event.key),
+  // distinctUntilChanged((a, b) => a === b),
+  map((arrow: string) => moveInfos[arrow])
 
-const arrowKeys$ = fromEvent<KeyboardEvent>(document, "keydown")
+  //tap((v: SnakeState) => moveSnake(v))
+);
+const timer$ = timer(0, 1000)
   .pipe(
-    filter(
-      (event: KeyboardEvent) =>
-        event.key === "ArrowLeft" ||
-        event.key === "ArrowRight" ||
-        event.key === "ArrowUp" ||
-        event.key === "ArrowDown"
-    ),
-    map((event) => event.key),
-    distinctUntilChanged((a, b) => a === b),
-    map((code: string) => moveInfos[code]),
+    withLatestFrom((v) => arrowKeys$),
     scan(
-      (state, move) => ({
+      (state) => ({
         ...state,
-        direction: move.direction,
-        distance: move.distance,
+        axis: state.direction.axis,
+        direction: state.direction,
+        position: {
+          x: state.position.x + state.distance,
+          y: state.position.y + state.distance,
+        },
+        distance: state.distance + state.distance,
       }),
       initialState
     ),
-    tap((v: SnakeState) => moveSnake(v)),
-    tap((v: SnakeState) => console.log("snakeState:", v))
+    tap((v: SnakeState) => {
+      console.log("snakeState-position:", v.position);
+    }),
+    tap((v) => moveSnake(v)),
+    take(5)
   )
   .subscribe();
 
-const startx = 200;
-const starty = 200;
-
 const moveSnake = (snakeState: SnakeState) => {
-  let axis = snakeState.move.direction.axis;
+  let axis = snakeState.direction.axis;
   let moveAxis = `--snake-move-${axis}`;
-  let movePositionx = `${snakeState.move.position.x}px`;
-  let movePositiony = `${snakeState.move.position.y}px`;
+  let movePositionx = `${snakeState.position.x}px`;
+  let movePositiony = `${snakeState.position.y}px`;
   let moveValue = axis === "x" ? movePositionx : movePositiony;
   console.log("css-setProperty:", moveAxis, moveValue);
   root.style.setProperty(moveAxis, moveValue);
 };
 
-// const moves$ = timer$.pipe(
-//   take(5),
-//   tap(() => moveSnake()),
-//   tap((v) => console.log("timer$:", v))
-// );
-//.subscribe();
+// const moves$ = timer$
+//   .pipe(
+//     (n) => arrowKeys$,
+//     tap((state) => moveSnake(state)),
+//     take(5)
+//   )
+//   .subscribe((v) => console.log("moves$", v));
