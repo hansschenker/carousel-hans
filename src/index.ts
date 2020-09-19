@@ -14,7 +14,7 @@ import {
   mapTo,
   scan,
 } from "rxjs/operators";
-import { fromEvent, timer, merge, of } from "rxjs";
+import { fromEvent, timer, merge, of, combineLatest } from "rxjs";
 
 // dom elements: snake parts
 const snakeParts = Array.from(document.getElementsByClassName("snake"));
@@ -95,9 +95,9 @@ const arrowKeys$ = fromEvent<KeyboardEvent>(document, "keydown").pipe(
 
   //tap((v: SnakeState) => moveSnake(v))
 );
-const timer$ = timer(0, 1000)
+const timer$ = timer(0, 1000);
+const moves$ = combineLatest(timer$, arrowKeys$)
   .pipe(
-    withLatestFrom((v) => arrowKeys$),
     scan(
       (state) => ({
         ...state,
@@ -131,12 +131,10 @@ const moveSnake = (snakeState: SnakeState) => {
   let moveValue = axis === "x" ? movePositionx : movePositiony;
   console.log("css-setProperty:", moveAxis, moveValue);
   root.style.setProperty(moveAxis, moveValue);
-};
 
-// const moves$ = timer$
-//   .pipe(
-//     (n) => arrowKeys$,
-//     tap((state) => moveSnake(state)),
-//     take(5)
-//   )
-//   .subscribe((v) => console.log("moves$", v));
+  console.log("state-direction-to:", snakeState.direction.axisTo);
+  console.log("state-direction-axis:", snakeState.direction.axis);
+  console.log("state-distance:", snakeState.distance);
+  console.log("state-position-x:", snakeState.position.x);
+  console.log("state-position-y:", snakeState.position.y);
+};
